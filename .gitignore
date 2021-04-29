@@ -1,0 +1,4 @@
+
+# Files and folders that should NOT be checked into Git
+node_modules
+.env
