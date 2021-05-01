@@ -30,9 +30,11 @@ const typeDefs = gql`
   }
   type Message {
     message: String
+    token: String
   }
   type Query {
     todos: [Todo]
+    todoItem(id: String!): Todo
     users: [User]
   }
   type Mutation {
@@ -43,15 +45,40 @@ const typeDefs = gql`
 `;
 const todos = [
   {
-    title: "Hello",
-    decription: "Hey! a quick reminder",
+    id: "1",
+    title: "Firebase authentication",
+    description: "Add user auth with firebase",
     completed: false,
-    due: "12-05-2021",
+    due_date: "12-05-2021",
+  },
+  {
+    id: "2",
+    title: "CRUD TODO",
+    description: "Hey! a quick reminder",
+    completed: false,
+    due_date: "12-05-2021",
   },
 ];
 const resolvers = {
   Query: {
-    todos: () => todos,
+    todos: (_, args, context) => {
+      if (!context?.uid) {
+        throw new Error("Token required");
+      }
+
+      return todos;
+    },
+    todoItem: (_, args, context) => {
+      if (!context?.uid) {
+        throw new Error("Token required");
+      }
+      if (!args.id) {
+        throw new Error("ID required");
+      }
+
+      const todoItem = todos.filter((todo) => todo.id === args.id);
+      return todoItem[0];
+    },
     users: () => {
       return admin
         .auth()
@@ -148,13 +175,18 @@ const resolvers = {
     },
   },
 };
+const corsOptions = {};
 const server = new ApolloServer({
+  cors: {
+    origin: ["http://localhost:3000"],
+    credentials: true,
+  },
   typeDefs,
   resolvers,
   context: ({ req }) => {
     let token = "";
     const authorization = req.headers.authorization;
-    console.log(" auth token", authorization);
+
     if (!authorization) {
       return {
         uid: null,
@@ -173,8 +205,7 @@ const server = new ApolloServer({
       .auth()
       .verifyIdToken(token)
       .then((decoded) => {
-        console.log("Decoded token", decoded);
-
+        console.log("Decoded token", decoded.name);
         return {
           uid: decoded.uid,
         };
