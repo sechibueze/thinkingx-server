@@ -178,11 +178,18 @@ const resolvers = {
 const corsOptions = {};
 const server = new ApolloServer({
   cors: {
-    origin: ["http://localhost:3000"],
+    origin: [
+      "http://localhost:3000",
+      "https://thinkingx-611dc.firebaseapp.com",
+      "https://thinkingx.firebaseapp.com",
+    ],
     credentials: true,
   },
+
   typeDefs,
   resolvers,
+  introspection: true,
+  playground: true,
   context: ({ req }) => {
     let token = "";
     const authorization = req.headers.authorization;
